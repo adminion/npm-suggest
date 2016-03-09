@@ -10,6 +10,7 @@ const async = require('async');
 const clear = require('clear');
 const debug = require('debug');
 const inquirer = require('inquirer');
+const moment = require('moment');
 const program = require('commander');
 const request = require('request'); 
 
@@ -35,6 +36,7 @@ const FIELDS = [
   'scripts'
 ];
 
+let page = 1;
 let results = [];
 let suggestions = [];
 
@@ -121,7 +123,18 @@ function digestResults (next) {
     suggestions[i] = {};
 
     for (let key in results[i]) {
-      suggestions[i][key] = results[i][key][0];
+      if (key === 'dependencies' || key === 'devDependencies' || key === 'keywords') {
+
+        log('results[%s][%s]: %j', i, key, results[i][key]);
+
+        suggestions[i][key] = [];
+
+        for (let j = 0; j < results[i][key].length; j+= 1) {
+          suggestions[i][key][j] = results[i][key][j];
+        }
+      } else {
+        suggestions[i][key] = results[i][key][0];
+      }
     }
   }
 
@@ -295,14 +308,18 @@ function inspect (i) {
 
   let suggestion = suggestions[i];
   console.log(`
-  rating:       ${suggestion.rating}
-  name:         ${suggestion.name}
-  description:  ${suggestion.description}
-  author:       ${suggestion.author}
-  maintainers:  ${suggestion.maintainers}
-  version:      ${suggestion.version}
-  created:      ${suggestion.created}
-  homepage:     ${suggestion.homepage}
+  rating:           ${suggestion.rating}
+  name:             ${suggestion.name}
+  description:      ${suggestion.description}
+  author:           ${suggestion.author}
+  maintainers:      ${suggestion.maintainers}
+  version:          ${suggestion.version}
+  created:          ${moment(suggestion.created).fromNow()}
+  modified:         ${moment(suggestion.modified).fromNow()}
+  homepage:         ${suggestion.homepage}
+  dependencies:     ${suggestion.dependencies}
+  devDependencies:  ${suggestion.devDependencies}
+  keywords:         ${suggestion.keywords}
   
 `);
 
