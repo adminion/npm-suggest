@@ -38,6 +38,8 @@ const FIELDS = [
 let results = [];
 let suggestions = [];
 
+console.log('compiling list of suggestions for "' + process.argv.slice(2).join (' ') + '"...');
+
 // setup our CLI program
 program
   .version(pkg.version)
@@ -240,7 +242,18 @@ function parseInput (input) {
 
 function listHeaders () {
   // two spaces at beginning are intentional
-  return 'RATING\tNAME\t\t       VERSION\t       DESCRIPTION';
+
+  let header = util.format('RATING%sNAME%sVERSION%sDESCRIPTION',
+    ' '.repeat(8),
+    ' '.repeat(20),
+    ' '.repeat(9)
+    );
+
+  if (header.length > (process.stdout.columns - 3 ) ) {
+    header = header.substring(0, process.stdout.columns - 2);
+  }
+
+  return header;
 }
 
 function formatChoice (i) {
@@ -259,13 +272,17 @@ function formatChoice (i) {
 
   let suggestion_str = [
     displayRating,
-    ' \t',
+    ' '.repeat('9'),
     displayName,
     ' '.repeat(24 - displayName.length),
     suggestion.version,
     ' '.repeat(16 - String(suggestion.version).length),
     suggestion.description
   ].join('');
+
+  if (suggestion_str.length > (process.stdout.columns - 2 ) ) {
+    suggestion_str = suggestion_str.substr(0, process.stdout.columns - 3);
+  }
 
   log('suggestion_str', suggestion_str);
 
