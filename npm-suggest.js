@@ -295,14 +295,14 @@ function inspect (i) {
 
   let suggestion = suggestions[i];
   console.log(`
-  rating:\t${suggestion.rating}
-  name:\t\t${suggestion.name}
-  description:\t${suggestion.description}
-  author:\t${suggestion.author}
-  maintainers:\t${suggestion.maintainers}
-  version:\t${suggestion.version}
-  created:\t${suggestion.created}
-  homepage:\t${suggestion.homepage}
+  rating:       ${suggestion.rating}
+  name:         ${suggestion.name}
+  description:  ${suggestion.description}
+  author:       ${suggestion.author}
+  maintainers:  ${suggestion.maintainers}
+  version:      ${suggestion.version}
+  created:      ${suggestion.created}
+  homepage:     ${suggestion.homepage}
   
 `);
 
