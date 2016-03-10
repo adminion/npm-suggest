@@ -80,7 +80,15 @@ function main (keywords) {
   
   async.series(steps, (err) => {
     if (err) {
-      return error(err);
+
+      error(err);
+      
+      if (suggestions.length) {
+        listSuggestions();
+      } else {
+        console.log(`REQUEST_ERROR: Please make sure you are connected to the internet.`);
+        process.exit(1);
+      }
     }
   });
 } 
@@ -100,7 +108,12 @@ function search (next) {
 
   log('request_url', request_url);
 
-  request(request_url, function (err, response, body) {
+  let requestOptions = {
+    url: request_url,
+    timeout: 10000 // 10 seconds
+  }
+
+  request(requestOptions, function (err, response, body) {
 
     if (err) {
       next(err);
@@ -201,7 +214,6 @@ function listSuggestions (next) {
 
   log('choices', choices);
 
-  clear();
 
   let question = {
     name: 'inspect',
@@ -215,6 +227,7 @@ function listSuggestions (next) {
     )
   }
 
+  clear();
 
   prompt(question, function (answers) {
 
