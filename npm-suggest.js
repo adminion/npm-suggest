@@ -7,7 +7,7 @@ const util = require('util');
 const pkg = require('./package');
 
 const async = require('async');
-const clear = require('clear');
+const clearScreen = require('clear');
 const debug = require('debug');
 const inquirer = require('inquirer');
 const moment = require('moment');
@@ -162,8 +162,22 @@ function digestResults (next) {
 
 function listSuggestions (next) {
 
-  let choices = [new inquirer.Separator(listHeaders())];
+  let choices = [];
 
+  // add a separator with the current page information
+  choices[choices.length] = new inquirer.Separator(
+    util.format('Suggestions for "%s" Page %s (%s - %s):',
+      program.keywords.join(' '),
+      page,
+      page * 10 - 9,
+      page * 10
+    )
+  );
+
+  // add a separator with column headers
+  choices[choices.length] = new inquirer.Separator(listHeaders());
+
+  // add each suggestion
   for (let i = 0; i < suggestions.length; i+=1) {
     let suggestion = suggestions[i];
 
@@ -174,8 +188,10 @@ function listSuggestions (next) {
     };
   }
 
+  // add a default separator
   choices[choices.length] = new inquirer.Separator();
 
+  // if we are on page two or greater, add a previous page choice
   if (page > 1) {
     let prevPage = page - 1;
     let from = prevPage * 10 - 9;
@@ -188,6 +204,7 @@ function listSuggestions (next) {
     }
   }
 
+  // add a next page choice
   choices[choices.length] = {
     name: util.format('Next page: %s (%s - %s)',
       page + 1,
@@ -198,36 +215,35 @@ function listSuggestions (next) {
     short: 'previous'
   }
 
+  // add search again choice
   choices[choices.length] = {
     name: 'Search Again',
     value: 'search',
     short: 'search'
   };
 
+  // add a choice to exit
   choices[choices.length] = {
     name: 'Exit',
     value: 'exit', 
     short: 'exit'
   };
 
+  // add a default separator to improve cyclical scrolling
   choices[choices.length] = new inquirer.Separator();
 
   log('choices', choices);
 
-
+  // format or "question" prompt 
   let question = {
-    name: 'inspect',
-    type: 'list',
-    choices: choices,
-    message: util.format('suggestions for "%s" Page %s (%s - %s)', 
-      program.keywords.join(' '),
-      page,
-      page * 10 - 9,
-      page * 10
-    )
+    name: 'inspect', 
+    type: 'list', // shows a list and allows users to nav with up and down
+                  // and select with enter/return
+    choices: choices, 
+    message: 'Please press "enter" to inspect a package' 
   }
 
-  clear();
+  clearScreen();
 
   prompt(question, function (answers) {
 
@@ -254,7 +270,7 @@ function searchPrompt () {
     message: 'search'
   }
 
-  clear();
+  clearScreen();
 
   prompt(question, function (answers) {
 
@@ -273,7 +289,7 @@ function continuePrompt () {
   };
 
   prompt(question, () => {
-    clear();
+    clearScreen();
     listSuggestions();
   });
 }
@@ -286,28 +302,28 @@ function parseInput (input) {
   if ('string' === typeof input) {
     switch (input) {
       case 'next':    page+=1;
-                      clear();
+                      clearScreen();
                       main(program.keywords);
                       break;
 
       case 'prev':    page-=1;
-                      clear();
+                      clearScreen();
                       main(program.keywords);
                       break;
 
       case 'search':  searchPrompt();
                       break;
 
-      case 'exit':    clear();
+      case 'exit':    clearScreen();
                       process.exit();
                       break;
 
-      default:        clear();
+      default:        clearScreen();
                       listSuggestions();
                       break;
     }
   } else {
-    clear();
+    clearScreen();
     inspect(input);
   }
 }
@@ -315,8 +331,8 @@ function parseInput (input) {
 function listHeaders () {
   // two spaces at beginning are intentional
 
-  let header = util.format('RATING%sNAME%sVERSION%sDESCRIPTION',
-    ' '.repeat(8),
+  let header = util.format(' RATING%sNAME%sVERSION%sDESCRIPTION',
+    ' '.repeat(7),
     ' '.repeat(20),
     ' '.repeat(9)
     );
