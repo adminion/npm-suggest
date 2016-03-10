@@ -40,8 +40,6 @@ let page = 1;
 let results = [];
 let suggestions = [];
 
-console.log('compiling list of suggestions for "' + process.argv.slice(2).join (' ') + '"...');
-
 // setup our CLI program
 program
   .version(pkg.version)
@@ -65,6 +63,8 @@ if (!program.args.length) {
 
 // main function
 function main (keywords) {
+
+  console.log('compiling list of suggestions for "' + keywords.join (' ') + '"...');
 
   log('keywords',keywords);
 
@@ -90,12 +90,15 @@ function search (next) {
 
   log('program.keywords', program.keywords);
 
-  let request_url = util.format('%s?q=%s&fields=%s&size=%s&sort=rating:desc',
+  let request_url = util.format('%s?q=%s&explain=true&fields=%s&from=%s&size=%s&sort=_score:desc,rating:desc',
     NPM_SEARCH_URL,
     program.keywords.join('%20'),
     FIELDS.join(','),
+    (page - 1) * 10,
     program.limit
   );
+
+  log('request_url', request_url);
 
   request(request_url, function (err, response, body) {
 
@@ -117,7 +120,6 @@ function search (next) {
 }
 
 function digestResults (next) {
-
 
   for (let i = 0; i < results.length; i+=1) {
     suggestions[i] = {};
@@ -161,6 +163,28 @@ function listSuggestions (next) {
 
   choices[choices.length] = new inquirer.Separator();
 
+  if (page > 1) {
+    let prevPage = page - 1;
+    let from = prevPage * 10 - 9;
+    let to = prevPage * 10;
+
+    choices[choices.length] = {
+      name: `Prev page: ${prevPage} (${from} - ${to})`,
+      value: 'prev',
+      short: 'prev'
+    }
+  }
+
+  choices[choices.length] = {
+    name: util.format('Next page: %s (%s - %s)',
+      page + 1,
+      ((page + 1) * 10) - 9,
+      (page + 1) * 10
+    ),
+    value: 'next',
+    short: 'previous'
+  }
+
   choices[choices.length] = {
     name: 'Search Again',
     value: 'search',
@@ -183,7 +207,12 @@ function listSuggestions (next) {
     name: 'inspect',
     type: 'list',
     choices: choices,
-    message: 'suggestions for "' + program.keywords.join(' ') + '" (press "enter" to inspect):'
+    message: util.format('suggestions for "%s" Page %s (%s - %s)', 
+      program.keywords.join(' '),
+      page,
+      page * 10 - 9,
+      page * 10
+    )
   }
 
 
@@ -215,6 +244,9 @@ function searchPrompt () {
   clear();
 
   prompt(question, function (answers) {
+
+    log('answers.search', answers.search);
+
     main(answers.search.split(' '));
   });
 
@@ -240,11 +272,25 @@ function parseInput (input) {
 
   if ('string' === typeof input) {
     switch (input) {
+      case 'next':    page+=1;
+                      clear();
+                      main(program.keywords);
+                      break;
+
+      case 'prev':    page-=1;
+                      clear();
+                      main(program.keywords);
+                      break;
+
       case 'search':  searchPrompt();
                       break;
 
       case 'exit':    clear();
                       process.exit();
+                      break;
+
+      default:        clear();
+                      listSuggestions();
                       break;
     }
   } else {
