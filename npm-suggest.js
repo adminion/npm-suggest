@@ -437,6 +437,13 @@ function inspect (pkg) {
     }
   ]
 
+  if (pkg.repository) {
+    choices[choices.length] = {
+      name: 'Open repository in browser',
+      value: 'repo'
+    }
+  }
+
 
 
 
@@ -464,6 +471,14 @@ function inspect (pkg) {
                         break
 
       case 'homepage':  open(pkg.homepage)
+                        clearScreen()
+                        inspect(pkg)
+                        break
+
+      case 'repo':      child_process.exec(`npm repo ${pkg.name}`, (err) => {
+                          if (err) log.error('err', err)
+                        })
+
                         clearScreen()
                         inspect(pkg)
                         break
